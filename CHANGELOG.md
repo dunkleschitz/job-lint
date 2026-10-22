@@ -24,3 +24,8 @@ Initial build.
   the tamper-detection test exercising its intended path), job-lint
   (20/20), call-log-condenser, hookbin (12/12), maildrop (11/11),
   gatekeeper (21/21), labnote (15/15).
+
+## v1.0.1 — 2026-10-22
+
+- `-h/--help` now prints full help and exits 0 (previously: usage line on
+  stderr, exit 2).

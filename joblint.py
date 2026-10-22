@@ -262,7 +262,20 @@ def lint_jobs(jobs):
 
 # --------------------------------------------------------------------- CLI
 
+def print_help():
+    print("usage: joblint.py lint <jobs.yaml|jobs.json>")
+    print()
+    print("Lint a declarative scheduled-job description for the common")
+    print("ways agent cron jobs go wrong. See RULES.md for the full rule list.")
+    print()
+    print("Exit codes: 0 = no findings, 1 = findings, 2 = usage/input error.")
+    print("  -h, --help   print this help and exit")
+
+
 def main(argv):
+    if argv and argv[0] in ("-h", "--help"):
+        print_help()
+        return 0
     if len(argv) != 2 or argv[0] != "lint":
         print("usage: joblint.py lint <jobs.yaml|jobs.json>", file=sys.stderr)
         return 2

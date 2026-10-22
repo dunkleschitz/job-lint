@@ -148,6 +148,17 @@ class TestCli(unittest.TestCase):
     def test_usage_error(self):
         self.assertEqual(main([]), 2)
 
+    def test_help_flag(self):
+        buf = io.StringIO()
+        old = sys.stdout
+        sys.stdout = buf
+        try:
+            rc = main(["--help"])
+        finally:
+            sys.stdout = old
+        self.assertEqual(rc, 0)
+        self.assertIn("usage:", buf.getvalue())
+
     def test_missing_file(self):
         self.assertEqual(main(["lint", "/nonexistent/jobs.yaml"]), 2)
 
