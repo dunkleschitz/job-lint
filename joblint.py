@@ -281,6 +281,9 @@ def main(argv):
     if argv and argv[0] == "--version":
         print("job-lint " + VERSION)
         return 0
+    if argv[:1] == ["lint"] and argv[1:] in (["-h"], ["--help"]):
+        print_help()
+        return 0
     if len(argv) != 2 or argv[0] != "lint":
         print("usage: joblint.py lint <jobs.yaml|jobs.json>", file=sys.stderr)
         return 2
