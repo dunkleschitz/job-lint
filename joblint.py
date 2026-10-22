@@ -17,6 +17,8 @@ import re
 import sys
 from collections import Counter
 
+VERSION = "1.0.0"
+
 RULES = {
     "JL01": ("warn", "no stop condition: add stop.max_runs, stop.expires, or stop.success_condition"),
     "JL02": ("error", "unbounded retries: set retry.max_attempts (<= 10)"),
@@ -275,6 +277,9 @@ def print_help():
 def main(argv):
     if argv and argv[0] in ("-h", "--help"):
         print_help()
+        return 0
+    if argv and argv[0] == "--version":
+        print("job-lint " + VERSION)
         return 0
     if len(argv) != 2 or argv[0] != "lint":
         print("usage: joblint.py lint <jobs.yaml|jobs.json>", file=sys.stderr)
