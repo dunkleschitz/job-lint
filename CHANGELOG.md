@@ -1,6 +1,15 @@
 ## Unreleased
 
 - Added `--version` flag (bench-wide CLI convention: `<tool> <VERSION>`; module-level `VERSION` constant as single source of truth).
+- `explain` mode (v1.1.0): `joblint.py explain "<cron>" [--next N] [--json]`
+  explains a 5-field cron expression (or @hourly/@daily/@weekly/@monthly/
+  @yearly) in plain English with per-field breakdown and next run times
+  in local time. Handles month/day names, lists/ranges/steps, standard
+  cron day-of-month/day-of-week OR semantics (warns when both are
+  restricted), and flags never-runs schedules (e.g. Feb 30). Pairs with
+  JL08: lint flags the bad schedule, explain tells you what a good one
+  means. Exit 0 explained / 2 invalid. (Folded per the ROADMAP note on
+  the rejected standalone cron-explainer — not a new tool.)
 
 # job-lint CHANGELOG
 

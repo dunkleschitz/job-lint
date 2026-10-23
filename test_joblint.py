@@ -198,3 +198,108 @@ class TestCli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)
+
+
+class ExplainTest(unittest.TestCase):
+    def run_explain(self, *argv):
+        from joblint import cmd_explain
+        out, err = io.StringIO(), io.StringIO()
+        old_o, old_e = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = out, err
+        try:
+            rc = cmd_explain(list(argv))
+        finally:
+            sys.stdout, sys.stderr = old_o, old_e
+        return rc, out.getvalue(), err.getvalue()
+
+    def test_every_15_minutes(self):
+        from joblint import explain_cron
+        explained, warnings = explain_cron("*/15 * * * *")
+        self.assertEqual(explained["headline"], "every 15 minutes")
+        self.assertEqual(warnings, [])
+
+    def test_weekdays(self):
+        from joblint import explain_cron
+        explained, _ = explain_cron("30 9 * * 1-5")
+        self.assertEqual(explained["headline"], "weekdays at 09:30")
+
+    def test_weekends(self):
+        from joblint import explain_cron
+        explained, _ = explain_cron("0 9 * * 0,6")
+        self.assertEqual(explained["headline"], "weekends at 09:00")
+
+    def test_sunday_7_equals_0(self):
+        from joblint import explain_cron
+        a, _ = explain_cron("0 9 * * 0")
+        b, _ = explain_cron("0 9 * * 7")
+        self.assertEqual(a["headline"], b["headline"])
+
+    def test_month_and_dow_names(self):
+        from joblint import explain_cron
+        explained, _ = explain_cron("0 9 * jan mon")
+        self.assertIn("January", explained["fields"]["month"])
+        self.assertIn("Monday", explained["fields"]["day of week"])
+
+    def test_at_words(self):
+        from joblint import explain_cron
+        explained, _ = explain_cron("@daily")
+        self.assertEqual(explained["headline"], "daily at 00:00")
+
+    def test_dom_dow_or_warning(self):
+        from joblint import explain_cron
+        _, warnings = explain_cron("0 9 15 * 3")
+        self.assertTrue(any("EITHER" in w for w in warnings))
+
+    def test_invalid_rejected(self):
+        rc, _, err = self.run_explain("61 * * * *")
+        self.assertEqual(rc, 2)
+        self.assertIn("invalid cron", err)
+        rc, _, _ = self.run_explain("* * *")
+        self.assertEqual(rc, 2)
+        rc, _, _ = self.run_explain("0 0 1 13 *")
+        self.assertEqual(rc, 2)
+
+    def test_never_runs_feb30(self):
+        from joblint import next_cron_runs
+        runs, never = next_cron_runs("0 0 30 2 *")
+        self.assertTrue(never)
+        self.assertEqual(runs, [])
+
+    def test_next_runs_are_ordered_and_match(self):
+        from datetime import datetime
+        from joblint import next_cron_runs, parse_cron, _matches
+        fields = parse_cron("0 12 * * *")
+        now = datetime(2026, 10, 23, 6, 0)
+        runs, never = next_cron_runs("0 12 * * *", count=2, now=now)
+        self.assertFalse(never)
+        self.assertEqual(len(runs), 2)
+        self.assertTrue(runs[0] < runs[1])
+        for r in runs:
+            self.assertTrue(_matches(fields, r))
+            self.assertEqual((r.hour, r.minute), (12, 0))
+
+    def test_dom_dow_or_semantics_in_next_runs(self):
+        # 15th of month OR Wednesday: a Wednesday that is not the 15th runs
+        from datetime import datetime
+        from joblint import next_cron_runs
+        now = datetime(2026, 10, 23, 6, 0)  # a Friday
+        runs, never = next_cron_runs("0 9 15 * 3", count=1, now=now)
+        self.assertFalse(never)
+        # 2026-10-28 is a Wednesday
+        self.assertEqual(runs[0].strftime("%Y-%m-%d"), "2026-10-28")
+
+    def test_json_output(self):
+        import json
+        rc, out, _ = self.run_explain("0 9 * * *", "--json", "--next", "1")
+        self.assertEqual(rc, 0)
+        payload = json.loads(out)
+        self.assertEqual(payload["headline"], "daily at 09:00")
+        self.assertEqual(len(payload["next_runs"]), 1)
+        self.assertFalse(payload["never_runs"])
+
+    def test_help_and_bad_next(self):
+        rc, out, _ = self.run_explain("--help")
+        self.assertEqual(rc, 0)
+        self.assertIn("usage:", out)
+        rc, _, err = self.run_explain("0 9 * * *", "--next", "0")
+        self.assertEqual(rc, 2)

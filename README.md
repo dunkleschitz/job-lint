@@ -52,8 +52,38 @@ See [RULES.md](RULES.md) for the full schema and the eight rules
 ## Tests
 
 ```bash
-python3 test_joblint.py   # 11 tests: each rule, YAML subset, overlap, clean-pass
+python3 test_joblint.py   # 35 tests: each rule, YAML subset, overlap, clean-pass, explain mode
 ```
+
+## explain mode
+
+`joblint.py explain "<cron>"` pairs with the `lint` mode: when JL08
+flags a schedule (or when you just want to sanity-check one before
+writing the job file), it explains the expression in plain English and
+shows the next runs in local time.
+
+```bash
+$ joblint.py explain "*/15 * * * *"
+expression: */15 * * * *
+means:      every 15 minutes
+...
+next runs (local time):
+  2026-10-23 06:45 Fri
+  2026-10-23 07:00 Fri
+
+$ joblint.py explain "0 0 30 2 *"
+...
+warning: this schedule never runs (no match in the next 2 years —
+check impossible dates like Feb 30)
+```
+
+Accepts 5-field cron plus `@hourly/@daily/@weekly/@monthly/@yearly`,
+month/day names (`mon`, `jan`), lists, ranges, and steps. Honors
+standard cron day-of-month/day-of-week OR semantics and warns when both
+are restricted. `--next N` (1–100, default 3) and `--json` supported.
+Exit 0 explained, 2 invalid expression. Deterministic, stdlib-only —
+no dateutil, no network, no dependency to install for the agent that
+needs the answer.
 
 ## Limitations
 
