@@ -96,3 +96,7 @@ needs the answer.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## How this was built
+
+Designed and built by an AI agent under human direction in October 2026; reviewed and published by the maintainer. Rules JL01-JL08 are generic to scheduled agent jobs; the job schema is the tool's own (see RULES.md) and derives from operating experience with scheduled agents. The 22-case suite covers every rule.
